@@ -47,6 +47,10 @@ app.use(config.BASE_PATH, router)
 
 connectToDatabase()
 
-app.listen(config.PORT, () => {
-    console.log(`Server is running on port ${config.PORT}`);
-})
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(config.PORT, () => {
+        console.log(`Server is running on port ${config.PORT}`);
+    });
+}
+
+export default app;
