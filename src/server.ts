@@ -1,56 +1,65 @@
+import express from "express";
 import dotenv from "dotenv";
-dotenv.config();
-import express from "express"
-import { config } from "./config/app-config"
-import { connectToDatabase } from "./database/connectionToDatabase"
-import router from "./routes"
 import cors from "cors";
 import morgan from "morgan";
-import session from "express-session";
-import "./config/passport"; // 
-import passport from "passport";
 import cookieParser from "cookie-parser";
+import passport from "passport";
 
+import { config } from "./config/app-config";
+import { connectToDatabase } from "./database/connectionToDatabase";
+import router from "./routes";
 
+// IMPORTANT:
+// Comment passport config temporarily
+// import "./config/passport";
 
-const app = express()
+dotenv.config();
 
-app.use(passport.initialize());
+const app = express();
+
+// Connect DB
+connectToDatabase();
+
+// Middlewares
+app.use(express.json());
 
 app.use(cookieParser());
 
-app.use(express.json())
 app.use(
-    cors(
-        {
-            origin: config.APP_ORIGIN,
-            methods: ["GET", "POST", "DELETE", "PUT"],
-            allowedHeaders: ["Content-Type", "Authorization"],
-            credentials: true
-        }
-    )
+  cors({
+    origin: config.APP_ORIGIN,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
 );
+
 app.use(morgan("dev"));
 
-app.use(
-    session({
-        secret: "secret123",
-        resave: false,
-        saveUninitialized: false,
-    })
-);
-
 app.use(passport.initialize());
-app.use(passport.session()); // لو هتستخدم sessions
 
-app.use(config.BASE_PATH, router)
+// Routes
+app.use(config.BASE_PATH, router);
 
-connectToDatabase()
+// Health check
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is running 🚀",
+  });
+});
 
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(config.PORT, () => {
-        console.log(`Server is running on port ${config.PORT}`);
-    });
-}
+// Global Error Handler
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error(err);
+
+  res.status(500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
+
+// IMPORTANT:
+// DO NOT use app.listen() on Vercel
 
 export default app;
