@@ -1,65 +1,58 @@
-import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
-import morgan from "morgan";
-import cookieParser from "cookie-parser";
-import passport from "passport";
+dotenv.config();
 
+import express from "express";
 import { config } from "./config/app-config";
 import { connectToDatabase } from "./database/connectionToDatabase";
 import router from "./routes";
-
-// IMPORTANT:
-// Comment passport config temporarily
-// import "./config/passport";
-
-dotenv.config();
+import cors from "cors";
+import morgan from "morgan";
+import "./config/passport";
+import passport from "passport";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
-// Connect DB
-connectToDatabase();
-
-// Middlewares
-app.use(express.json());
+// ✅ Database connection — جوه دالة مش top-level
+let isConnected = false;
+const ensureDbConnected = async () => {
+  if (!isConnected) {
+    await connectToDatabase();
+    isConnected = true;
+  }
+};
 
 app.use(cookieParser());
-
+app.use(express.json());
 app.use(
   cors({
     origin: config.APP_ORIGIN,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
-
 app.use(morgan("dev"));
-
 app.use(passport.initialize());
 
-// Routes
+// ✅ Middleware يضمن الـ DB connected قبل أي request
+app.use(async (req, res, next) => {
+  try {
+    await ensureDbConnected();
+    next();
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    res.status(500).json({ message: "Database connection failed" });
+  }
+});
+
 app.use(config.BASE_PATH, router);
 
-// Health check
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Server is running 🚀",
+// ✅ للـ local development فقط
+if (process.env.NODE_ENV !== "production") {
+  app.listen(config.PORT, () => {
+    console.log(`Server is running on port ${config.PORT}`);
   });
-});
-
-// Global Error Handler
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error(err);
-
-  res.status(500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-  });
-});
-
-// IMPORTANT:
-// DO NOT use app.listen() on Vercel
+}
 
 export default app;
