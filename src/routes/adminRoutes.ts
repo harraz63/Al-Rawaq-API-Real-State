@@ -1,6 +1,8 @@
 import { Router } from "express";
-import { getAllPropertiesAdmin, getAllUsers, getDashboardStats } from "../controllers/adminController";
+import { getAllPropertiesAdmin, getAllUsers, getDashboardStats, setFeaturedProperties } from "../controllers/adminController";
 import { authenticateJWT, authorizeRoles } from "../middleware/auth-middleware";
+import { validateRequest } from "zod-express-middleware";
+import { featuredPropertiesSchema } from "../utils/validate-schema";
 
 const router = Router();
 
@@ -22,5 +24,12 @@ router.get(
     getAllPropertiesAdmin
 );
 
+router.put(
+    "/featured-properties",
+    authenticateJWT,
+    authorizeRoles("admin"),
+    validateRequest({ body: featuredPropertiesSchema }),
+    setFeaturedProperties,
+);
 
 export default router;

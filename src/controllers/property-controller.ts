@@ -108,6 +108,25 @@ interface PropertyQuery {
     rooms?: string;
 }
 
+export const getFeaturedProperties = async (_req: Request, res: Response) => {
+    try {
+        const properties = await Property.find({
+            featuredOrder: { $ne: null },
+            status: "available",
+        })
+            .sort({ featuredOrder: 1 })
+            .limit(8)
+            .populate("listedBy", "name email profilePicture role");
+
+        return res.status(200).json({
+            count: properties.length,
+            properties,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: (error as Error).message });
+    }
+};
+
 export const getAllProperties = async (req: Request, res: Response) => {
     try {
         const query: PropertyQuery = {};

@@ -20,6 +20,11 @@ const appConfig = () => ({
         REFRESH_SECRET: getEnv("JWT_REFRESH_SECRET"),
         REFRESH_EXPIRES_IN: getEnv("JWT_REFRESH_EXPIRES_IN", "30d"),
     },
+    GOOGLE: {
+        CLIENT_ID: getEnv("GOOGLE_CLIENT_ID", process.env.GOOGLE_CLIENT_ID),
+        CLIENT_SECRET: getEnv("GOOGLE_CLIENT_SECRET", process.env.GOOGLE_CLIENT_SECRET),
+        CALLBACK_URL: getEnv("GOOGLE_CALLBACK_URL", process.env.GOOGLE_CALLBACK_URL),
+    },
     // MAILER_SENDER: getEnv("MAILER_SENDER"),
     // RESEND_API_KEY: getEnv("RESEND_API_KEY"),
 });

@@ -130,8 +130,17 @@ const propertySchema = new Schema(
         },
 
         listedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+
+        featuredOrder: {
+            type: Number,
+            min: 1,
+            max: 8,
+            default: null,
+        },
     },
     { timestamps: true }
 );
+
+propertySchema.index({ featuredOrder: 1 }, { sparse: true });
 
 export const Property = model("Property", propertySchema);

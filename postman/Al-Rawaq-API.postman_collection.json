@@ -1,0 +1,624 @@
+{
+  "info": {
+    "_postman_id": "al-rawaq-api-collection",
+    "name": "Al-Rawaq Real Estate API",
+    "description": "Postman collection for the Al-Rawaq Real Estate API (Express + MongoDB).\n\n## Setup\n1. Import this collection and optionally create an environment.\n2. Set `baseUrl` (default: `http://localhost:5000/api/v1`).\n3. Run **Login** — `accessToken` and `refreshToken` are saved automatically.\n4. Protected routes use `Authorization: Bearer {{accessToken}}`.\n\n## Roles\n- **buyer** — default on register\n- **seller** / **admin** — required for some endpoints (set in DB or seed data)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "propertyId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verificationToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resetPasswordToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Registration, login, tokens, password reset, and Google OAuth.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Creates a buyer account and sends a verification email."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-email"]
+            },
+            "description": "Verifies email using the token from the verification link."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "    }",
+                  "    if (json.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "    }",
+                  "    pm.test('Login successful', () => {",
+                  "        pm.expect(json.accessToken).to.be.a('string');",
+                  "        pm.expect(json.refreshToken).to.be.a('string');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Returns `user`, `accessToken`, and `refreshToken`. Tokens are also set as httpOnly cookies."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "    }",
+                  "    if (json.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Issues new access and refresh tokens. Token can also be sent via cookie or Authorization header."
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ahmed@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot-password"]
+            },
+            "description": "Sends a password reset email if the account exists and is verified."
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetPasswordToken}}\",\n  \"newPassword\": \"newpassword123\",\n  \"confirmPassword\": \"newpassword123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-password"]
+            },
+            "description": "Resets password using the token from the reset email link."
+          },
+          "response": []
+        },
+        {
+          "name": "Google Sign In (Browser)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "google"]
+            },
+            "description": "Opens Google OAuth in the browser. After success, redirects to `APP_ORIGIN/auth/success` with `accessToken`, `refreshToken`, and `user` query params.\n\nNot ideal for Postman — use a browser or Postman's **Send and Download** / open in browser."
+          },
+          "response": []
+        },
+        {
+          "name": "Google OAuth Callback",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/callback",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "google", "callback"]
+            },
+            "description": "Google redirects here after authentication. Handled by Passport — do not call manually unless testing with a valid OAuth code."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Properties",
+      "description": "Public property listings and seller/admin property creation.",
+      "item": [
+        {
+          "name": "Get Featured Properties",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/property/featured",
+              "host": ["{{baseUrl}}"],
+              "path": ["property", "featured"]
+            },
+            "description": "Returns up to 8 admin-selected properties ordered by relevance (`featuredOrder`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Properties",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/property?purpose=sale&type=apartment&minPrice=100000&maxPrice=5000000&location=الإسكندرية,المعمورة",
+              "host": ["{{baseUrl}}"],
+              "path": ["property"],
+              "query": [
+                {
+                  "key": "purpose",
+                  "value": "sale",
+                  "description": "sale | rent"
+                },
+                {
+                  "key": "type",
+                  "value": "apartment",
+                  "description": "apartment | villa | house | land | office | store"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "100000"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "5000000"
+                },
+                {
+                  "key": "location",
+                  "value": "الإسكندرية,المعمورة",
+                  "description": "governorate,city,street (comma-separated)"
+                }
+              ]
+            },
+            "description": "Lists properties with optional filters."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Property By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json._id) {",
+                  "        pm.collectionVariables.set('propertyId', json._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/property/{{propertyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["property", "{{propertyId}}"]
+            },
+            "description": "Fetches a single property by MongoDB ObjectId."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Recommended Properties",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/property/{{propertyId}}/recommended",
+              "host": ["{{baseUrl}}"],
+              "path": ["property", "{{propertyId}}", "recommended"]
+            },
+            "description": "Returns up to 4 similar properties based on scoring (purpose, type, location, price, etc.)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Property",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "شقة فاخرة في المعمورة",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "شقة واسعة بإطلالة بحرية مع تشطيب سوبر لوكس وموقف سيارات.",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "2500000",
+                  "type": "text"
+                },
+                {
+                  "key": "area",
+                  "value": "150",
+                  "type": "text"
+                },
+                {
+                  "key": "purpose",
+                  "value": "sale",
+                  "type": "text",
+                  "description": "sale | rent"
+                },
+                {
+                  "key": "type",
+                  "value": "apartment",
+                  "type": "text",
+                  "description": "apartment | villa | house | land | office | store"
+                },
+                {
+                  "key": "paymentMethod",
+                  "value": "cash",
+                  "type": "text"
+                },
+                {
+                  "key": "advertiserType",
+                  "value": "owner",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "available",
+                  "type": "text"
+                },
+                {
+                  "key": "bedrooms",
+                  "value": "3",
+                  "type": "text"
+                },
+                {
+                  "key": "bathrooms",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "listedBy",
+                  "value": "",
+                  "type": "text",
+                  "description": "User ObjectId (seller/admin)"
+                },
+                {
+                  "key": "location",
+                  "value": "{\"street\":\"شارع الكورنيش\",\"city\":\"المعمورة\",\"governorate\":\"الإسكندرية\",\"coordinates\":{\"lat\":31.1234,\"lng\":29.9876}}",
+                  "type": "text"
+                },
+                {
+                  "key": "amenities",
+                  "value": "[\"مصعد\",\"جراج\",\"أمن 24 ساعة\"]",
+                  "type": "text"
+                },
+                {
+                  "key": "details",
+                  "value": "{\"view\":\"تطل على البحر\",\"listingCode\":\"RWQ-001\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload up to 15 images"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/property/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["property", "create"]
+            },
+            "description": "Creates a property. Requires **seller** or **admin** role.\n\nUses `multipart/form-data`. `location`, `amenities`, and `details` are JSON strings."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Admin-only endpoints. Requires a user with `role: admin`.",
+      "item": [
+        {
+          "name": "Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "stats"]
+            },
+            "description": "Returns user count, property counts, and monthly analytics."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?page=1&limit=10&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name, email, or phone"
+                }
+              ]
+            },
+            "description": "Paginated list of users with optional search."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Properties (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties?page=1&limit=10&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "properties"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by title, city, or governorate"
+                }
+              ]
+            },
+            "description": "Paginated admin view of all properties."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Featured Properties",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.properties && json.properties.length > 0) {",
+                  "        pm.collectionVariables.set('propertyId', json.properties[0]._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyIds\": [\n    \"{{propertyId}}\"\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/featured-properties",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "featured-properties"]
+            },
+            "description": "Sets up to 8 featured properties. Array order = display order (1 = most relevant).\n\nReplaces any previous featured selection."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

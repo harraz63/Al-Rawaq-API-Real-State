@@ -15,6 +15,11 @@ const verificationSchema = new mongoose.Schema(
             type: Date,
             required: true,
         },
+        purpose: {
+            type: String,
+            enum: ["email-verification", "reset-password", "refresh-token"],
+            default: "email-verification",
+        },
     },
     { timestamps: true }
 );

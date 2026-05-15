@@ -1,40 +1,49 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy, Profile } from "passport-google-oauth20";
-import dotenv from "dotenv";
+import { config } from "./app-config";
 import User from "../models/User";
 
-dotenv.config();
-
 passport.use(
-    new GoogleStrategy(
-        {
-            clientID: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-            callbackURL: process.env.GOOGLE_CALLBACK_URL!,
-        },
-        async (_accessToken, _refreshToken, profile: Profile, done) => {
-            try {
-                const email = profile.emails?.[0].value;
+  new GoogleStrategy(
+    {
+      clientID: config.GOOGLE.CLIENT_ID,
+      clientSecret: config.GOOGLE.CLIENT_SECRET,
+      callbackURL: config.GOOGLE.CALLBACK_URL,
+    },
+    async (_accessToken, _refreshToken, profile: Profile, done) => {
+      try {
+        const email = profile.emails?.[0]?.value;
 
-                if (!email) return done(new Error("No email found in Google profile"));
-
-                let user = await User.findOne({ email });
-
-                if (!user) {
-                    user = await User.create({
-                        name: profile.displayName,
-                        email,
-                        profilePicture: profile.photos?.[0]?.value,
-                        isGoogleUser: true,
-                    });
-                }
-
-                return done(null, user);
-            } catch (err) {
-                done(err, undefined);
-            }
+        if (!email) {
+          return done(new Error("No email found in Google profile"), undefined);
         }
-    )
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+          user = await User.create({
+            name: profile.displayName,
+            email,
+            profilePicture: profile.photos?.[0]?.value,
+            isGoogleUser: true,
+            isEmailVerified: true,
+            role: "buyer",
+          });
+        } else if (!user.isGoogleUser) {
+          user.isGoogleUser = true;
+          user.isEmailVerified = true;
+          if (!user.profilePicture && profile.photos?.[0]?.value) {
+            user.profilePicture = profile.photos[0].value;
+          }
+          await user.save();
+        }
+
+        return done(null, user);
+      } catch (err) {
+        return done(err as Error, undefined);
+      }
+    },
+  ),
 );
 
 export default passport;

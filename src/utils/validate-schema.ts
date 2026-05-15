@@ -34,6 +34,16 @@ const tokenSchema = z.object({
     token: z.string().min(1, "Token is required"),
 });
 
+const refreshTokenSchema = z.object({
+    refreshToken: z.string().min(1, "Refresh token is required").optional(),
+});
+
+const featuredPropertiesSchema = z.object({
+    propertyIds: z
+        .array(z.string().min(1))
+        .max(8, "You can feature at most 8 properties"),
+});
+
 const workspaceSchema = z.object({
     name: z.string().min(1, "Name is required"),
     description: z.string().optional(),
@@ -243,4 +253,6 @@ export {
     taskSchema,
     inviteMemberSchema,
     tokenSchema,
+    refreshTokenSchema,
+    featuredPropertiesSchema,
 };

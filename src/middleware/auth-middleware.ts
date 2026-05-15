@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
-import {  Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import User from "../models/User";
+import { config } from "../config/app-config";
 
 // ✅ يتحقق إن المستخدم عامل تسجيل دخول
 export const authenticate = async (req: any, res: Response, next: NextFunction) => {
@@ -33,21 +34,26 @@ export const authorizeRoles = (...allowedRoles: string[]) => {
 
 export const authenticateJWT = (req: any, res: Response, next: NextFunction) => {
     try {
-        // 1️⃣ جلب التوكن من cookies أو Authorization header
         const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
 
         if (!token) {
             return res.status(401).json({ message: "Not authenticated" });
         }
 
-        // 2️⃣ التحقق من التوكن وفك تشفيره
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+        const decoded = jwt.verify(token, config.JWT.SECRET) as {
+            userId?: string;
+            role?: string;
+            purpose?: string;
+        };
 
-        // 3️⃣ إضافة بيانات اليوزر للـ request
+        if (decoded.purpose !== "login" || !decoded.userId) {
+            return res.status(401).json({ message: "Invalid access token" });
+        }
+
         req.user = decoded;
 
-        next(); // مواصلة التنفيذ
-    } catch (error: any) {
+        next();
+    } catch {
         return res.status(401).json({ message: "Invalid or expired token" });
     }
 };

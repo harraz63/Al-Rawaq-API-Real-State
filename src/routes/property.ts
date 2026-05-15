@@ -3,7 +3,7 @@ import express from 'express'
 import { propertySchema } from '../utils/validate-schema'
 import { validateRequest } from 'zod-express-middleware'
 
-import { createProperty, getAllProperties, getPropertyById, getRecommendedProperties } from '../controllers/property-controller'
+import { createProperty, getAllProperties, getFeaturedProperties, getPropertyById, getRecommendedProperties } from '../controllers/property-controller'
 import { authenticateJWT, authorizeRoles } from '../middleware/auth-middleware'
 import { upload } from '../middleware/upload'
 
@@ -18,6 +18,9 @@ router.post("/create",
         body: propertySchema
     }),
     createProperty
+)
+router.get("/featured",
+    getFeaturedProperties
 )
 router.get("/",
     getAllProperties

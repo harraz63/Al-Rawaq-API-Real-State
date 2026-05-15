@@ -1,12 +1,12 @@
 
 import express from 'express'
-import { loginUser, registerUser, resetPasswordRequest, verifyEmail, verifyResetPasswordTokenAndResetPassword } from '../controllers/auth-controller'
-import { emailSchema, loginSchema, registerSchema, resetPasswordSchema, verifyEmailSchema } from '../utils/validate-schema'
+import { loginUser, refreshAccessToken, registerUser, resetPasswordRequest, verifyEmail, verifyResetPasswordTokenAndResetPassword } from '../controllers/auth-controller'
+import { emailSchema, loginSchema, refreshTokenSchema, registerSchema, resetPasswordSchema, verifyEmailSchema } from '../utils/validate-schema'
 import { validateRequest } from 'zod-express-middleware'
-import { generateJWTToken } from '../utils/generateToken'
 import passport from 'passport'
 import { config } from '../config/app-config'
-import User from '../models/User'
+import { IUser } from '../models/User'
+import { issueAuthTokens, setAuthCookies } from '../utils/auth-tokens'
 
 const router = express.Router();
 
@@ -22,6 +22,9 @@ router.post("/verify-email",
 router.post("/login", validateRequest({
     body: loginSchema,
 }), loginUser)
+router.post("/refresh", validateRequest({
+    body: refreshTokenSchema,
+}), refreshAccessToken)
 router.post("/forgot-password", validateRequest({
     body: emailSchema,
 }), resetPasswordRequest)
@@ -37,37 +40,36 @@ router.get(
 
 router.get(
     "/google/callback",
-    passport.authenticate("google", { session: false, failureRedirect: "/auth/login" }),
-    async (req: any, res) => {
+    passport.authenticate("google", {
+        session: false,
+        failureRedirect: `${config.APP_ORIGIN}/auth/login?error=google`,
+    }),
+    async (req: express.Request, res: express.Response) => {
+        try {
+            const user = req.user as IUser;
+            if (!user) {
+                return res.redirect(`${config.APP_ORIGIN}/auth/login?error=google`);
+            }
 
-        let user = await User.findOne({ email: req.user.email });
+            user.lastLogin = new Date();
+            user.isEmailVerified = true;
+            await user.save();
 
-        if (!user) {
-            user = await User.create({
-                name: req.user.displayName,
-                email: req.user.email,
-                profilePicture: req.user.photos?.[0]?.value,
-                isGoogleUser: true,
-                isEmailVerified: true,
-                role: "buyer",
+            const { accessToken, refreshToken } = await issueAuthTokens(user);
+            setAuthCookies(res, accessToken, refreshToken);
+
+            const { password: _password, ...safeUser } = user.toObject();
+            const params = new URLSearchParams({
+                accessToken,
+                refreshToken,
+                user: JSON.stringify(safeUser),
             });
+
+            return res.redirect(`${config.APP_ORIGIN}/auth/success?${params.toString()}`);
+        } catch (error) {
+            console.error("Google callback error:", error);
+            return res.redirect(`${config.APP_ORIGIN}/auth/login?error=google`);
         }
-
-        // ✅ حدث تاريخ آخر تسجيل دخول
-        user.lastLogin = new Date();
-        user.isEmailVerified = true;
-        await user.save();
-        const token = generateJWTToken(req.user.id, "login" , user.role);
-
-        res.cookie("token", token, {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-        const { password, ...safeUser } = user.toObject();
-
-        res.redirect(`${config.APP_ORIGIN}/auth/success?user=${encodeURIComponent(JSON.stringify(safeUser))}`);
     }
 );
 

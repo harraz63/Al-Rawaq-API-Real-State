@@ -6,6 +6,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "../models/User";
 import Verification from "../models/verification";
 import { generateJWTToken } from "../utils/generateToken";
+import { issueAuthTokens, setAuthCookies } from "../utils/auth-tokens";
 import { sendEmailVerification } from "../utils/send-email-nodEmailer";
 
 const registerUser = async (req: Request, res: Response) => {
@@ -157,23 +158,19 @@ const loginUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const token = generateJWTToken(user.id, "login", user.role);
-
-    res.cookie("token", token, {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    const { accessToken, refreshToken } = await issueAuthTokens(user);
+    setAuthCookies(res, accessToken, refreshToken);
 
     user.lastLogin = new Date();
     await user.save();
 
-    const { password: safePassword, ...safeUser } = user.toObject();
+    const { password: _password, ...safeUser } = user.toObject();
 
     return res.status(200).json({
       message: "Login successful",
       user: safeUser,
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -378,10 +375,62 @@ const verifyResetPasswordTokenAndResetPassword = async (
   }
 };
 
+const refreshAccessToken = async (req: Request, res: Response) => {
+  try {
+    const refreshToken =
+      req.body.refreshToken ||
+      req.cookies?.refreshToken ||
+      req.headers.authorization?.split(" ")[1];
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Refresh token is required" });
+    }
+
+    const payload = jwt.verify(
+      refreshToken,
+      config.JWT.REFRESH_SECRET,
+    ) as JwtPayload & { userId?: string; purpose?: string };
+
+    if (payload.purpose !== "refresh" || !payload.userId) {
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    const storedToken = await Verification.findOne({
+      userId: payload.userId,
+      token: refreshToken,
+      purpose: "refresh-token",
+    });
+
+    if (!storedToken || storedToken.expiresAt.getTime() < Date.now()) {
+      return res.status(401).json({ message: "Refresh token expired or revoked" });
+    }
+
+    const user = await User.findById(payload.userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    const tokens = await issueAuthTokens(user);
+    setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+
+    return res.status(200).json({
+      message: "Token refreshed successfully",
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(401).json({ message: error.message });
+    }
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export {
   registerUser,
   loginUser,
   verifyEmail,
   resetPasswordRequest,
   verifyResetPasswordTokenAndResetPassword,
+  refreshAccessToken,
 };

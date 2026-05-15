@@ -1,6 +1,7 @@
 import User from "../models/User";
 
 import { Request, Response } from "express";
+import { Types } from "mongoose";
 import { Property } from "../models/property";
 
 export const getDashboardStats = async (req: Request, res: Response) => {
@@ -148,6 +149,71 @@ export const getAllPropertiesAdmin = async (req: Request, res: Response) => {
             }
         });
 
+    } catch (err: any) {
+        return res.status(500).json({ message: err.message });
+    }
+};
+
+export const setFeaturedProperties = async (req: Request, res: Response) => {
+    try {
+        const { propertyIds } = req.body as { propertyIds: string[] };
+
+        if (!Array.isArray(propertyIds) || propertyIds.length === 0) {
+            return res.status(400).json({
+                message: "propertyIds must be a non-empty array",
+            });
+        }
+
+        if (propertyIds.length > 8) {
+            return res.status(400).json({
+                message: "You can feature at most 8 properties",
+            });
+        }
+
+        const uniqueIds = [...new Set(propertyIds)];
+        if (uniqueIds.length !== propertyIds.length) {
+            return res.status(400).json({
+                message: "Duplicate property IDs are not allowed",
+            });
+        }
+
+        const invalidId = uniqueIds.find((id) => !Types.ObjectId.isValid(id));
+        if (invalidId) {
+            return res.status(400).json({ message: `Invalid property ID: ${invalidId}` });
+        }
+
+        const existingCount = await Property.countDocuments({
+            _id: { $in: uniqueIds },
+        });
+
+        if (existingCount !== uniqueIds.length) {
+            return res.status(404).json({ message: "One or more properties were not found" });
+        }
+
+        await Property.updateMany(
+            { featuredOrder: { $ne: null } },
+            { $unset: { featuredOrder: 1 } },
+        );
+
+        await Promise.all(
+            uniqueIds.map((propertyId, index) =>
+                Property.findByIdAndUpdate(propertyId, {
+                    featuredOrder: index + 1,
+                }),
+            ),
+        );
+
+        const properties = await Property.find({
+            featuredOrder: { $ne: null },
+        })
+            .sort({ featuredOrder: 1 })
+            .limit(8);
+
+        return res.status(200).json({
+            message: "Featured properties updated successfully",
+            count: properties.length,
+            properties,
+        });
     } catch (err: any) {
         return res.status(500).json({ message: err.message });
     }
