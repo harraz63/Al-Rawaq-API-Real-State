@@ -3,6 +3,36 @@ import { Property } from "../models/property";
 import { Types } from "mongoose";
 import cloudinary from "../utils/upload";
 
+// ─── Reusable service: fetch related properties ───────────────────────────────
+/**
+ * Returns up to `limit` properties that share the same area/city and have a
+ * price within ±30% of the given price. The current property is excluded.
+ */
+export const fetchRelatedProperties = async (
+    currentId: Types.ObjectId,
+    governorate: string,
+    city: string,
+    price: number,
+    limit = 4,
+) => {
+    return Property.find({
+        _id: { $ne: currentId },
+        status: "available",
+        $or: [
+            { "location.governorate": governorate },
+            { "location.city": city },
+        ],
+        price: {
+            $gte: price * 0.7,
+            $lte: price * 1.3,
+        },
+    })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .populate("listedBy", "name email profilePicture role")
+        .lean();
+};
+
 // إنشاء عقار جديد
 export const createProperty = async (req: any, res: Response) => {
     try {
@@ -131,99 +161,100 @@ export const getAllProperties = async (req: Request, res: Response) => {
     try {
         const query: PropertyQuery = {};
 
+        // ── Location filter ───────────────────────────────────────────────────
         if (typeof req.query.location === "string" && req.query.location.trim() !== "") {
             const parts = req.query.location.split(",").map((p) => p.trim());
-
             if (parts[0]) query["location.governorate"] = parts[0];
             if (parts[1]) query["location.city"] = parts[1];
             if (parts[2]) query["location.street"] = parts[2];
         }
 
-        // if (req.query.location) {
-        //     let locations: { governorate?: string; city?: string; street?: string }[] = [];
-
-        //     if (typeof req.query.location === "string") {
-        //         // محاولة تحويل الـ string ل JSON
-        //         try {
-        //             locations = JSON.parse(req.query.location);
-        //         } catch {
-        //             // fallback لو مش JSON
-        //             const parts = req.query.location.split(",").map((p) => p.trim());
-        //             locations = [{
-        //                 governorate: parts[0],
-        //                 city: parts[1],
-        //                 street: parts[2],
-        //             }];
-        //         }
-        //     } else if (Array.isArray(req.query.location)) {
-        //         locations = req.query.location.map((loc) => JSON.parse(loc));
-        //     }
-
-        //     // إنشاء شرط $or لكل location
-        //     if (locations.length > 0) {
-        //         query.$or = locations.map((loc) => {
-        //             const locQuery: any = {};
-        //             if (loc.governorate) locQuery["location.governorate"] = loc.governorate;
-        //             if (loc.city) locQuery["location.city"] = loc.city;
-        //             if (loc.street) locQuery["location.street"] = loc.street;
-        //             return locQuery;
-        //         });
-        //     }
-        // }
-
-        // purpose
+        // ── Purpose filter ────────────────────────────────────────────────────
         if (typeof req.query.purpose === "string") {
             query.purpose = req.query.purpose;
         }
 
-        // type
+        // ── Type filter ───────────────────────────────────────────────────────
         if (typeof req.query.type === "string") {
             query.type = req.query.type;
         }
 
-        // price range
+        // ── Price range filter ────────────────────────────────────────────────
         if (typeof req.query.minPrice === "string" && req.query.minPrice.trim() !== "") {
-            query.price = {
-                ...query.price,
-                $gte: Number(req.query.minPrice),
-            };
+            query.price = { ...query.price, $gte: Number(req.query.minPrice) };
         }
-
         if (typeof req.query.maxPrice === "string" && req.query.maxPrice.trim() !== "") {
-            query.price = {
-                ...query.price,
-                $lte: Number(req.query.maxPrice),
-            };
+            query.price = { ...query.price, $lte: Number(req.query.maxPrice) };
         }
 
+        // ── Pagination ────────────────────────────────────────────────────────
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const itemsPerPage = Math.min(50, Math.max(1, Number(req.query.limit) || 8));
+        const skip = (page - 1) * itemsPerPage;
 
+        const [totalItems, properties] = await Promise.all([
+            Property.countDocuments(query),
+            Property.find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(itemsPerPage)
+                .populate("listedBy", "name email profilePicture role"),
+        ]);
 
-        // Fetch properties
-        const properties = await Property.find(query);
-        res.setHeader(
-            "Cache-Control",
-            "no-store, no-cache, must-revalidate, proxy-revalidate"
-        );
-        return res.status(200).json(properties);
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
 
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+
+        return res.status(200).json({
+            success: true,
+            metadata: {
+                currentPage: page,
+                totalPages,
+                totalItems,
+                itemsPerPage,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+            data: properties,
+        });
     } catch (error) {
-        return res.status(500).json({ message: (error as Error).message });
+        return res.status(500).json({ success: false, message: (error as Error).message });
     }
 };
 
 
-// جلب عقار واحد حسب الـ ID
+// جلب عقار واحد حسب الـ ID (مع العقارات المشابهة)
 export const getPropertyById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid property ID" });
+        if (!Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid property ID" });
+        }
 
-        const property = await Property.findById(id)
-        if (!property) return res.status(404).json({ message: "Property not found" });
+        const property = await Property.findById(id).populate(
+            "listedBy",
+            "name email profilePicture role",
+        );
+        if (!property) {
+            return res.status(404).json({ success: false, message: "Property not found" });
+        }
 
-        res.status(200).json(property);
+        // ── Fetch related properties ──────────────────────────────────────────
+        const relatedProperties = await fetchRelatedProperties(
+            property._id as Types.ObjectId,
+            property.location?.governorate ?? "",
+            property.location?.city ?? "",
+            property.price,
+            4,
+        );
+
+        return res.status(200).json({
+            success: true,
+            data: property,
+            relatedProperties,
+        });
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
