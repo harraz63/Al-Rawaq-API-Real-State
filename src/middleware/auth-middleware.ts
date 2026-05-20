@@ -2,36 +2,35 @@ import jwt from "jsonwebtoken";
 import { Response, NextFunction } from "express";
 import User from "../models/User";
 import { config } from "../config/app-config";
+import { errorResponse } from "../utils/api-response";
 
-// ─── authenticate (cookie/header – loads full user document) ──────────────────
 export const authenticate = async (req: any, res: Response, next: NextFunction) => {
     try {
         const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
         if (!token) {
-            return res.status(401).json({ success: false, message: "No token provided" });
+            return errorResponse(res, 401, "No token provided", null);
         }
 
         const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
         const user = await User.findById(decoded.id);
         if (!user) {
-            return res.status(401).json({ success: false, message: "User not found" });
+            return errorResponse(res, 401, "User not found", null);
         }
 
         req.user = user;
         req.userRole = decoded.role;
         next();
     } catch {
-        return res.status(401).json({ success: false, message: "Invalid or expired token" });
+        return errorResponse(res, 401, "Invalid or expired token", null);
     }
 };
 
-// ─── authenticateJWT (lightweight – uses JWT payload only) ───────────────────
 export const authenticateJWT = (req: any, res: Response, next: NextFunction) => {
     try {
         const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
 
         if (!token) {
-            return res.status(401).json({ success: false, message: "Not authenticated. Please log in." });
+            return errorResponse(res, 401, "Not authenticated. Please log in.", null);
         }
 
         const decoded = jwt.verify(token, config.JWT.SECRET) as {
@@ -41,36 +40,31 @@ export const authenticateJWT = (req: any, res: Response, next: NextFunction) => 
         };
 
         if (decoded.purpose !== "login" || !decoded.userId) {
-            return res.status(401).json({ success: false, message: "Invalid access token" });
+            return errorResponse(res, 401, "Invalid access token", null);
         }
 
         req.user = decoded;
         next();
     } catch {
-        return res.status(401).json({ success: false, message: "Invalid or expired token" });
+        return errorResponse(res, 401, "Invalid or expired token", null);
     }
 };
 
-// ─── authorizeRoles (must run AFTER authenticateJWT or authenticate) ──────────
-/**
- * Returns 401 if req.user is not set (auth middleware was not applied).
- * Returns 403 if the authenticated user's role is not in allowedRoles.
- */
 export const authorizeRoles = (...allowedRoles: string[]) => {
     return (req: any, res: Response, next: NextFunction) => {
         if (!req.user) {
-            // Should not reach here if authenticateJWT is applied first,
-            // but guard against middleware ordering mistakes.
-            return res.status(401).json({ success: false, message: "Not authenticated" });
+            return errorResponse(res, 401, "Not authenticated", null);
         }
 
         const role: string | undefined = req.user.role;
 
         if (!role || !allowedRoles.includes(role)) {
-            return res.status(403).json({
-                success: false,
-                message: `Access denied. Requires one of: [${allowedRoles.join(", ")}]`,
-            });
+            return errorResponse(
+                res,
+                403,
+                `Access denied. Requires one of: [${allowedRoles.join(", ")}]`,
+                null,
+            );
         }
 
         next();

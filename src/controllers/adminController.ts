@@ -3,218 +3,171 @@ import User from "../models/User";
 import { Request, Response } from "express";
 import { Types } from "mongoose";
 import { Property } from "../models/property";
+import { asyncHandler } from "../middleware/async-handler";
+import { AppError } from "../errors/app-error";
+import { successResponse } from "../utils/api-response";
 
-export const getDashboardStats = async (req: Request, res: Response) => {
-    try {
-        // عدد المستخدمين
-        const usersCount = await User.countDocuments();
+export const getDashboardStats = asyncHandler(async (_req: Request, res: Response) => {
+    const usersCount = await User.countDocuments();
+    const propertiesCount = await Property.countDocuments();
+    const availableProperties = await Property.countDocuments({ status: "available" });
+    const soldOrRented = await Property.countDocuments({
+        status: { $in: ["sold", "rented"] },
+    });
 
-        // إجمالي العقارات
-        const propertiesCount = await Property.countDocuments();
-
-        // العقارات المتاحة
-        const availableProperties = await Property.countDocuments({ status: "available" });
-
-        // العقارات غير المتاحة (مباعة/مؤجرة)
-        const soldOrRented = await Property.countDocuments({
-            status: { $in: ["sold", "rented"] }
-        });
-
-        // عدد البلاغات
-        // const reportsCount = await Report.countDocuments();
-
-        // عقارات آخر 6 شهور (Analytics)
-        const propertiesPerMonth = await Property.aggregate([
-            {
-                $group: {
-                    _id: { $month: "$createdAt" },
-                    count: { $sum: 1 }
-                }
+    const propertiesPerMonth = await Property.aggregate([
+        {
+            $group: {
+                _id: { $month: "$createdAt" },
+                count: { $sum: 1 },
             },
-            { $sort: { "_id": 1 } }
-        ]);
+        },
+        { $sort: { _id: 1 } },
+    ]);
 
-        // مستخدمين آخر 6 شهور
-        const usersPerMonth = await User.aggregate([
-            {
-                $group: {
-                    _id: { $month: "$createdAt" },
-                    count: { $sum: 1 }
-                }
+    const usersPerMonth = await User.aggregate([
+        {
+            $group: {
+                _id: { $month: "$createdAt" },
+                count: { $sum: 1 },
             },
-            { $sort: { "_id": 1 } }
-        ]);
+        },
+        { $sort: { _id: 1 } },
+    ]);
 
-        return res.status(200).json({
-            success: true,
-            data: {
-                usersCount,
-                propertiesCount,
-                availableProperties,
-                soldOrRented,
-                // reportsCount,
-                propertiesPerMonth,
-                usersPerMonth,
-            },
-        });
-    } catch (error) {
-        console.error("Dashboard Stats Error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "حدث خطأ أثناء تحميل البيانات"
-        });
+    return successResponse(res, 200, "Dashboard stats fetched successfully", {
+        usersCount,
+        propertiesCount,
+        availableProperties,
+        soldOrRented,
+        propertiesPerMonth,
+        usersPerMonth,
+    });
+});
+
+export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const search = (req.query.search as string) || "";
+
+    const query = search
+        ? {
+            $or: [
+                { name: { $regex: search, $options: "i" } },
+                { email: { $regex: search, $options: "i" } },
+                { phone: { $regex: search, $options: "i" } },
+            ],
+        }
+        : {};
+
+    const totalUsers = await User.countDocuments(query);
+
+    const users = await User.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+    return successResponse(
+        res,
+        200,
+        "Users fetched successfully",
+        users,
+        {
+            totalUsers,
+            page,
+            totalPages: Math.ceil(totalUsers / limit),
+        },
+    );
+});
+
+export const getAllPropertiesAdmin = asyncHandler(async (req: Request, res: Response) => {
+    const { search = "", page = 1, limit = 10 } = req.query;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const query: Record<string, unknown> = {};
+
+    if (search) {
+        query.$or = [
+            { title: { $regex: search, $options: "i" } },
+            { "location.city": { $regex: search, $options: "i" } },
+            { "location.governorate": { $regex: search, $options: "i" } },
+        ];
     }
-};
 
+    const total = await Property.countDocuments(query);
 
-export const getAllUsers = async (req: Request, res: Response) => {
-    try {
-        // pagination
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
+    const properties = await Property.find(query)
+        .skip(skip)
+        .limit(Number(limit))
+        .sort({ createdAt: -1 });
 
-        // search
-        const search = (req.query.search as string) || "";
+    return successResponse(
+        res,
+        200,
+        "Properties fetched successfully",
+        properties,
+        {
+            total,
+            page: Number(page),
+            totalPages: Math.ceil(total / Number(limit)),
+        },
+    );
+});
 
-        const query = search
-            ? {
-                $or: [
-                    { name: { $regex: search, $options: "i" } },
-                    { email: { $regex: search, $options: "i" } },
-                    { phone: { $regex: search, $options: "i" } },
-                ],
-            }
-            : {};
+export const setFeaturedProperties = asyncHandler(async (req: Request, res: Response) => {
+    const { propertyIds } = req.body as { propertyIds: string[] };
 
-        const totalUsers = await User.countDocuments(query);
-
-        const users = await User.find(query)
-            .skip(skip)
-            .limit(limit)
-            .sort({ createdAt: -1 });
-
-        return res.status(200).json({
-            success: true,
-            data: users,
-            pagination: {
-                totalUsers,
-                page,
-                totalPages: Math.ceil(totalUsers / limit),
-            },
-        });
-    } catch (error) {
-        console.error("Get Users Error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "حدث خطأ أثناء تحميل المستخدمين",
-        });
+    if (!Array.isArray(propertyIds) || propertyIds.length === 0) {
+        throw new AppError("propertyIds must be a non-empty array", 400);
     }
-};
 
-
-
-
-export const getAllPropertiesAdmin = async (req: Request, res: Response) => {
-    try {
-        const { search = "", page = 1, limit = 10 } = req.query;
-
-        const skip = (Number(page) - 1) * Number(limit);
-
-        const query: any = {};
-
-        // لو عايز تبحث باسم المعلن أو العنوان أو المدينة
-        if (search) {
-            query.$or = [
-                { title: { $regex: search, $options: "i" } },
-                { "location.city": { $regex: search, $options: "i" } },
-                { "location.governorate": { $regex: search, $options: "i" } }
-            ];
-        }
-
-        const total = await Property.countDocuments(query);
-
-        const properties = await Property.find(query)
-            .skip(skip)
-            .limit(Number(limit))
-            .sort({ createdAt: -1 });
-
-        return res.status(200).json({
-            success: true,
-            data: properties,
-            pagination: {
-                total,
-                page: Number(page),
-                totalPages: Math.ceil(total / Number(limit)),
-            }
-        });
-
-    } catch (err: any) {
-        return res.status(500).json({ message: err.message });
+    if (propertyIds.length > 8) {
+        throw new AppError("You can feature at most 8 properties", 400);
     }
-};
 
-export const setFeaturedProperties = async (req: Request, res: Response) => {
-    try {
-        const { propertyIds } = req.body as { propertyIds: string[] };
-
-        if (!Array.isArray(propertyIds) || propertyIds.length === 0) {
-            return res.status(400).json({
-                message: "propertyIds must be a non-empty array",
-            });
-        }
-
-        if (propertyIds.length > 8) {
-            return res.status(400).json({
-                message: "You can feature at most 8 properties",
-            });
-        }
-
-        const uniqueIds = [...new Set(propertyIds)];
-        if (uniqueIds.length !== propertyIds.length) {
-            return res.status(400).json({
-                message: "Duplicate property IDs are not allowed",
-            });
-        }
-
-        const invalidId = uniqueIds.find((id) => !Types.ObjectId.isValid(id));
-        if (invalidId) {
-            return res.status(400).json({ message: `Invalid property ID: ${invalidId}` });
-        }
-
-        const existingCount = await Property.countDocuments({
-            _id: { $in: uniqueIds },
-        });
-
-        if (existingCount !== uniqueIds.length) {
-            return res.status(404).json({ message: "One or more properties were not found" });
-        }
-
-        await Property.updateMany(
-            { featuredOrder: { $ne: null } },
-            { $unset: { featuredOrder: 1 } },
-        );
-
-        await Promise.all(
-            uniqueIds.map((propertyId, index) =>
-                Property.findByIdAndUpdate(propertyId, {
-                    featuredOrder: index + 1,
-                }),
-            ),
-        );
-
-        const properties = await Property.find({
-            featuredOrder: { $ne: null },
-        })
-            .sort({ featuredOrder: 1 })
-            .limit(8);
-
-        return res.status(200).json({
-            message: "Featured properties updated successfully",
-            count: properties.length,
-            properties,
-        });
-    } catch (err: any) {
-        return res.status(500).json({ message: err.message });
+    const uniqueIds = [...new Set(propertyIds)];
+    if (uniqueIds.length !== propertyIds.length) {
+        throw new AppError("Duplicate property IDs are not allowed", 400);
     }
-};
+
+    const invalidId = uniqueIds.find((id) => !Types.ObjectId.isValid(id));
+    if (invalidId) {
+        throw new AppError(`Invalid property ID: ${invalidId}`, 400);
+    }
+
+    const existingCount = await Property.countDocuments({
+        _id: { $in: uniqueIds },
+    });
+
+    if (existingCount !== uniqueIds.length) {
+        throw new AppError("One or more properties were not found", 404);
+    }
+
+    await Property.updateMany(
+        { featuredOrder: { $ne: null } },
+        { $unset: { featuredOrder: 1 } },
+    );
+
+    await Promise.all(
+        uniqueIds.map((propertyId, index) =>
+            Property.findByIdAndUpdate(propertyId, {
+                featuredOrder: index + 1,
+            }),
+        ),
+    );
+
+    const properties = await Property.find({
+        featuredOrder: { $ne: null },
+    })
+        .sort({ featuredOrder: 1 })
+        .limit(8);
+
+    return successResponse(
+        res,
+        200,
+        "Featured properties updated successfully",
+        properties,
+        { count: properties.length },
+    );
+});

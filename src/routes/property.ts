@@ -1,7 +1,7 @@
 
 import express from 'express'
 import { propertySchema } from '../utils/validate-schema'
-import { validateRequest } from 'zod-express-middleware'
+import { validateRequest } from '../middleware/validate-request'
 
 import { createProperty, getAllProperties, getFeaturedProperties, getPropertyById, getRecommendedProperties } from '../controllers/property-controller'
 import { authenticateJWT, authorizeRoles } from '../middleware/auth-middleware'

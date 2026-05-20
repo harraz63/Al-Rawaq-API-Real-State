@@ -2,7 +2,7 @@
 import express from 'express'
 import { loginUser, refreshAccessToken, registerUser, resetPasswordRequest, verifyEmail, verifyResetPasswordTokenAndResetPassword } from '../controllers/auth-controller'
 import { emailSchema, loginSchema, refreshTokenSchema, registerSchema, resetPasswordSchema, verifyEmailSchema } from '../utils/validate-schema'
-import { validateRequest } from 'zod-express-middleware'
+import { validateRequest } from '../middleware/validate-request'
 import passport from 'passport'
 import { config } from '../config/app-config'
 import { IUser } from '../models/User'

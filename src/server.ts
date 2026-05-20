@@ -10,6 +10,9 @@ import morgan from "morgan";
 import "./config/passport";
 import passport from "passport";
 import cookieParser from "cookie-parser";
+import { errorResponse } from "./utils/api-response";
+import { notFoundHandler } from "./middleware/not-found";
+import { errorHandler } from "./middleware/error-handler";
 
 const app = express();
 
@@ -42,11 +45,14 @@ app.use(async (req, res, next) => {
     next();
   } catch (error) {
     console.error("Database connection failed:", error);
-    res.status(500).json({ message: "Database connection failed" });
+    errorResponse(res, 500, "Database connection failed", null);
   }
 });
 
 app.use(config.BASE_PATH, router);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // ✅ للـ local development فقط
 if (process.env.NODE_ENV !== "production") {

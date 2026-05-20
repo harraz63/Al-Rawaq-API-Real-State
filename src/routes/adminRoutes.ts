@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { getAllPropertiesAdmin, getAllUsers, getDashboardStats, setFeaturedProperties } from "../controllers/adminController";
 import { authenticateJWT, authorizeRoles } from "../middleware/auth-middleware";
-import { validateRequest } from "zod-express-middleware";
+import { validateRequest } from "../middleware/validate-request";
 import { featuredPropertiesSchema } from "../utils/validate-schema";
 
 const router = Router();
