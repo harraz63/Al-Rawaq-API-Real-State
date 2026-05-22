@@ -54,6 +54,10 @@ export const createProperty = asyncHandler(async (req: any, res: Response) => {
         area,
     } = req.body;
 
+    console.log(req.body)
+
+    console.log("listedBy========>", listedBy)
+
     const uploadedImages = [];
     for (const file of req.files as Express.Multer.File[]) {
         const b64 = Buffer.from(file.buffer).toString("base64");
@@ -67,10 +71,13 @@ export const createProperty = asyncHandler(async (req: any, res: Response) => {
     }
 
     const parsedLocation =
-        typeof req.body.location === "string"
-            ? JSON.parse(req.body.location)
-            : req.body.location;
-    const parsedDetails = details ? JSON.parse(details) : undefined;
+        typeof location === "string" ? JSON.parse(location) : location;
+    const parsedDetails =
+        details
+            ? typeof details === "string"
+                ? JSON.parse(details)
+                : details
+            : undefined;
 
     const property = await Property.create({
         title,
