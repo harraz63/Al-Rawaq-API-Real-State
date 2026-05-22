@@ -34,7 +34,7 @@ const userSchema = new Schema<IUser>({
     password: {
         type: String,
         required: function (this: any): boolean {
-            return !this.isGoogleUser; // بس مطلوب لو مش Google user
+            return !this.isGoogleUser;
         },
         select: false,
     },
