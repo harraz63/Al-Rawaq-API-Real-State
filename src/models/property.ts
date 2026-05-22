@@ -29,15 +29,15 @@ export interface IProperty extends Document {
     seller: Types.ObjectId; // Reference to User (the seller)
 
     details?: {
-        view?: string; // e.g., "تطل على الشارع الرئيسي"
+        view?: string;
         paymentMethod?: "cash" | "installments";
         advertiserType?: "owner" | "broker" | "developer";
         pricePerMeter?: number;
-        listingCode?: string; // رقم الإعلان
+        listingCode?: string;
     };
 
-    viewsCount?: number; // عدد المشاهدات
-    favoritesCount?: number; // عدد الناس اللي حطوه ف المفضلة
+    viewsCount?: number;
+    favoritesCount?: number;
 
     createdAt?: Date;
     updatedAt?: Date;
@@ -83,8 +83,8 @@ const propertySchema = new Schema(
 
         images: [
             {
-                path: { type: String, required: true }, // URL يجب أن يكون موجود
-                relativePath: { type: String, required: true }, // URL يجب أن يكون موجود
+                path: { type: String, required: true },
+                relativePath: { type: String, required: true },
             },
         ],
 
@@ -117,7 +117,7 @@ const propertySchema = new Schema(
         amenities: [{ type: String }],
 
         details: {
-            view: { type: String }, // تطل على الشارع الرئيسي
+            view: { type: String },
             pricePerMeter: { type: Number },
             listingCode: { type: String },
         },

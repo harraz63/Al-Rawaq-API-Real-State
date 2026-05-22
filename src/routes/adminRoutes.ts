@@ -6,7 +6,6 @@ import { featuredPropertiesSchema } from "../utils/validate-schema";
 
 const router = Router();
 
-// حماية API بصلاحيات Admin
 router.get("/stats",
     authenticateJWT,
     authorizeRoles("admin"),

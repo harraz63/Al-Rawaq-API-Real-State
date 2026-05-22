@@ -9,7 +9,7 @@ import { formatZodErrors } from "../utils/format-zod-errors";
 
 const isDuplicateKeyError = (
   err: unknown,
-): err is { code: number; keyValue: Record<string, unknown> } => {
+): err is { code: number; keyValue: Record<string , unknown> } => {
   return (
     typeof err === "object" &&
     err !== null &&

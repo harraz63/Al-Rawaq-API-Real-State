@@ -16,7 +16,6 @@ import { errorHandler } from "./middleware/error-handler";
 
 const app = express();
 
-// ✅ Database connection — جوه دالة مش top-level
 let isConnected = false;
 const ensureDbConnected = async () => {
   if (!isConnected) {
@@ -38,7 +37,6 @@ app.use(
 app.use(morgan("dev"));
 app.use(passport.initialize());
 
-// ✅ Middleware يضمن الـ DB connected قبل أي request
 app.use(async (req, res, next) => {
   try {
     await ensureDbConnected();
@@ -54,7 +52,6 @@ app.use(config.BASE_PATH, router);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// ✅ للـ local development فقط
 if (process.env.NODE_ENV !== "production") {
   app.listen(config.PORT, () => {
     console.log(`Server is running on port ${config.PORT}`);
