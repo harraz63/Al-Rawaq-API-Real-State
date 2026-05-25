@@ -48,6 +48,28 @@ const updatePropertyStatusSchema = z.object({
   status: z.enum(['available', 'pending', 'rejected']),
 });
 
+const updateProfileSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters long').optional(),
+  phoneNumber: z
+    .string()
+    .regex(/^01[0125][0-9]{8}$/, 'Invalid Egyptian phone number')
+    .optional(),
+  address: z.string().optional(),
+});
+
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z
+      .string()
+      .min(8, 'Password must be at least 8 characters long'),
+    confirmPassword: z.string().min(1, 'Confirm password is required'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Confirm password must match new password',
+    path: ['confirmPassword'],
+  });
+
 const workspaceSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
@@ -283,6 +305,8 @@ export const propertySchema = z.object({
     .default('available'),
 });
 
+const updatePropertySchema = propertySchema.partial();
+
 export {
   registerSchema,
   loginSchema,
@@ -297,4 +321,7 @@ export {
   refreshTokenSchema,
   featuredPropertiesSchema,
   updatePropertyStatusSchema,
+  updateProfileSchema,
+  changePasswordSchema,
+  updatePropertySchema,
 };

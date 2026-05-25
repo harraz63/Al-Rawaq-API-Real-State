@@ -5,6 +5,7 @@ import cloudinary from "../utils/upload";
 import { asyncHandler } from "../middleware/async-handler";
 import { AppError } from "../errors/app-error";
 import { successResponse } from "../utils/api-response";
+import User from "../models/User";
 
 export const fetchRelatedProperties = async (
     currentId: Types.ObjectId,
@@ -379,25 +380,63 @@ export const getRecommendedProperties = asyncHandler(async (req: Request, res: R
     );
 });
 
-export const updateProperty = asyncHandler(async (req: Request, res: Response) => {
+export const updateProperty = asyncHandler(async (req: any, res: Response) => {
     const { id } = req.params;
-    const updates = req.body;
+    const userId = req.user?._id ?? req.user?.userId;
 
-    const property = await Property.findByIdAndUpdate(id, updates, { new: true });
+    const property = await Property.findById(id);
     if (!property) {
         throw new AppError("Property not found", 404);
     }
 
-    return successResponse(res, 200, "Property updated successfully", { property });
+    if (
+        req.user.role === "seller" &&
+        property.listedBy.toString() !== userId?.toString()
+    ) {
+        throw new AppError("Not authorized to update this property", 403);
+    }
+
+    const uploadedImages = [];
+    for (const file of (req.files ?? []) as Express.Multer.File[]) {
+        const b64 = Buffer.from(file.buffer).toString("base64");
+        const dataURI = `data:${file.mimetype};base64,${b64}`;
+        const result = await cloudinary.uploader.upload(dataURI, { folder: "properties" });
+
+        uploadedImages.push({
+            path: result.secure_url,
+            relativePath: file.originalname,
+        });
+    }
+
+    if (uploadedImages.length > 0) {
+        property.images.push(...uploadedImages);
+    }
+
+    const { images, ...updates } = req.body;
+    Object.assign(property, updates);
+    const updatedProperty = await property.save();
+
+    return successResponse(res, 200, "Property updated successfully", updatedProperty);
 });
 
-export const deleteProperty = asyncHandler(async (req: Request, res: Response) => {
+export const deleteProperty = asyncHandler(async (req: any, res: Response) => {
     const { id } = req.params;
+    const userId = req.user?._id ?? req.user?.userId;
 
-    const property = await Property.findByIdAndDelete(id);
+    const property = await Property.findById(id);
     if (!property) {
         throw new AppError("Property not found", 404);
     }
 
-    return successResponse(res, 200, "Property deleted successfully");
+    if (
+        req.user.role === "seller" &&
+        property.listedBy.toString() !== userId?.toString()
+    ) {
+        throw new AppError("Not authorized to delete this property", 403);
+    }
+
+    await Property.findByIdAndDelete(id);
+    await User.updateMany({}, { $pull: { favorites: id } });
+
+    return successResponse(res, 200, "Property deleted successfully", null);
 });
