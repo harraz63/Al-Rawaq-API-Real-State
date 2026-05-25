@@ -579,6 +579,30 @@
           "response": []
         },
         {
+          "name": "Update Property Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"available\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties/{{propertyId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "properties", "{{propertyId}}", "status"]
+            },
+            "description": "Updates a property's status. Requires admin role.\n\nAllowed values: `available` | `pending` | `rejected`\n\nA property must have `status: \"available\"` before it can be added to featured properties via `PUT /admin/featured-properties`."
+          },
+          "response": []
+        },
+        {
           "name": "Set Featured Properties",
           "event": [
             {
@@ -614,7 +638,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["admin", "featured-properties"]
             },
-            "description": "Sets up to 8 featured properties. Array order = display order (1 = most relevant).\n\nReplaces any previous featured selection."
+            "description": "Sets up to 8 featured properties ordered by display priority (1 = most prominent).\n\nIMPORTANT: Only properties with `status: \"available\"` can be featured. Use `PATCH /admin/properties/:id/status` to approve a property before featuring it.\n\nReplaces any previous featured selection entirely."
           },
           "response": []
         }

@@ -6,7 +6,7 @@ export interface IProperty extends Document {
     description: string;
     price: number;
     type: "apartment" | "villa" | "house" | "land" | "office";
-    status: "available" | "sold" | "rented";
+    status: "available" | "sold" | "rented" | "pending" | "rejected";
     purpose: "sale" | "rent";
 
     location: {
@@ -125,7 +125,7 @@ const propertySchema = new Schema(
         views: { type: Number, default: 0 },
         status: {
             type: String,
-            enum: ["available", "sold", "rented", "pending"],
+            enum: ["available", "sold", "rented", "pending", "rejected"],
             default: "available",
         },
 
