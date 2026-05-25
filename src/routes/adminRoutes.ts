@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { getAllPropertiesAdmin, getAllUsers, getDashboardStats, setFeaturedProperties } from "../controllers/adminController";
+import { getAllPropertiesAdmin, getAllUsers, getDashboardStats, setFeaturedProperties, updatePropertyStatus } from "../controllers/adminController";
 import { authenticateJWT, authorizeRoles } from "../middleware/auth-middleware";
 import { validateRequest } from "../middleware/validate-request";
-import { featuredPropertiesSchema } from "../utils/validate-schema";
+import { featuredPropertiesSchema, updatePropertyStatusSchema } from "../utils/validate-schema";
 
 const router = Router();
 
@@ -21,6 +21,14 @@ router.get(
     authenticateJWT,
     authorizeRoles("admin"),
     getAllPropertiesAdmin
+);
+
+router.patch(
+    "/properties/:id/status",
+    authenticateJWT,
+    authorizeRoles("admin"),
+    validateRequest({ body: updatePropertyStatusSchema }),
+    updatePropertyStatus,
 );
 
 router.put(

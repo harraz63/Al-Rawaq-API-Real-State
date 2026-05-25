@@ -44,6 +44,10 @@ const featuredPropertiesSchema = z.object({
     .max(8, 'You can feature at most 8 properties'),
 });
 
+const updatePropertyStatusSchema = z.object({
+  status: z.enum(['available', 'pending', 'rejected']),
+});
+
 const workspaceSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
@@ -292,4 +296,5 @@ export {
   tokenSchema,
   refreshTokenSchema,
   featuredPropertiesSchema,
+  updatePropertyStatusSchema,
 };

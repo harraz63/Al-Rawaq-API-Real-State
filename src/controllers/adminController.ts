@@ -2,6 +2,7 @@ import User from "../models/User";
 
 import { Request, Response } from "express";
 import { Types } from "mongoose";
+import type { UpdateManyModel, UpdateOneModel } from "mongoose";
 import { Property } from "../models/property";
 import { asyncHandler } from "../middleware/async-handler";
 import { AppError } from "../errors/app-error";
@@ -115,6 +116,24 @@ export const getAllPropertiesAdmin = asyncHandler(async (req: Request, res: Resp
     );
 });
 
+export const updatePropertyStatus = asyncHandler(async (req: Request, res: Response) => {
+    const property = await Property.findById(req.params.id);
+
+    if (!property) {
+        throw new AppError("Property not found", 404);
+    }
+
+    property.status = req.body.status;
+    const updatedProperty = await property.save();
+
+    return successResponse(
+        res,
+        200,
+        "Property status updated successfully",
+        updatedProperty,
+    );
+});
+
 export const setFeaturedProperties = asyncHandler(async (req: Request, res: Response) => {
     const { propertyIds } = req.body as { propertyIds: string[] };
 
@@ -136,26 +155,45 @@ export const setFeaturedProperties = asyncHandler(async (req: Request, res: Resp
         throw new AppError(`Invalid property ID: ${invalidId}`, 400);
     }
 
-    const existingCount = await Property.countDocuments({
+    const existingProperties = await Property.find({
         _id: { $in: uniqueIds },
-    });
+    }).select("_id status");
 
-    if (existingCount !== uniqueIds.length) {
+    if (existingProperties.length !== uniqueIds.length) {
         throw new AppError("One or more properties were not found", 404);
     }
 
-    await Property.updateMany(
-        { featuredOrder: { $ne: null } },
-        { $unset: { featuredOrder: 1 } },
+    const unavailablePropertyIds = existingProperties
+        .filter((property) => property.status !== "available")
+        .map((property) => property._id.toString());
+
+    if (unavailablePropertyIds.length > 0) {
+        throw new AppError(
+            `Only available properties can be featured. Invalid property IDs: ${unavailablePropertyIds.join(", ")}`,
+            400,
+        );
+    }
+
+    const unsetFeaturedOrdersOperation: { updateMany: UpdateManyModel } = {
+        updateMany: {
+            filter: { featuredOrder: { $ne: null } },
+            update: { $unset: { featuredOrder: 1 } },
+        },
+    };
+
+    const setFeaturedOrderOperations: Array<{ updateOne: UpdateOneModel }> = uniqueIds.map(
+        (propertyId, index) => ({
+            updateOne: {
+                filter: { _id: propertyId },
+                update: { $set: { featuredOrder: index + 1 } },
+            },
+        }),
     );
 
-    await Promise.all(
-        uniqueIds.map((propertyId, index) =>
-            Property.findByIdAndUpdate(propertyId, {
-                featuredOrder: index + 1,
-            }),
-        ),
-    );
+    await Property.bulkWrite([
+        unsetFeaturedOrdersOperation,
+        ...setFeaturedOrderOperations,
+    ]);
 
     const properties = await Property.find({
         featuredOrder: { $ne: null },
