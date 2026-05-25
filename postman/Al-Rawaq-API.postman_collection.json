@@ -20,14 +20,18 @@
       "listen": "prerequest",
       "script": {
         "type": "text/javascript",
-        "exec": [""]
+        "exec": [
+          ""
+        ]
       }
     },
     {
       "listen": "test",
       "script": {
         "type": "text/javascript",
-        "exec": [""]
+        "exec": [
+          ""
+        ]
       }
     }
   ],
@@ -61,6 +65,11 @@
       "key": "resetPasswordToken",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -71,7 +80,9 @@
         {
           "name": "Register",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -82,12 +93,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"password123\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "description": "Creates a buyer account and sends a verification email."
           },
@@ -96,7 +116,9 @@
         {
           "name": "Verify Email",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -107,12 +129,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/verify-email",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "verify-email"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-email"
+              ]
             },
             "description": "Verifies email using the token from the verification link."
           },
@@ -144,7 +175,9 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -155,12 +188,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"password123\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Returns `user`, `accessToken`, and `refreshToken`. Tokens are also set as httpOnly cookies."
           },
@@ -188,7 +230,9 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -199,12 +243,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Issues new access and refresh tokens. Token can also be sent via cookie or Authorization header."
           },
@@ -213,7 +266,9 @@
         {
           "name": "Forgot Password",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -224,12 +279,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"ahmed@example.com\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/forgot-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "forgot-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
             },
             "description": "Sends a password reset email if the account exists and is verified."
           },
@@ -238,7 +302,9 @@
         {
           "name": "Reset Password",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -249,12 +315,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"token\": \"{{resetPasswordToken}}\",\n  \"newPassword\": \"newpassword123\",\n  \"confirmPassword\": \"newpassword123\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/reset-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "reset-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
             },
             "description": "Resets password using the token from the reset email link."
           },
@@ -263,13 +338,20 @@
         {
           "name": "Google Sign In (Browser)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/google",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "google"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google"
+              ]
             },
             "description": "Opens Google OAuth in the browser. After success, redirects to `APP_ORIGIN/auth/success` with `accessToken`, `refreshToken`, and `user` query params.\n\nNot ideal for Postman — use a browser or Postman's **Send and Download** / open in browser."
           },
@@ -278,13 +360,21 @@
         {
           "name": "Google OAuth Callback",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/google/callback",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "google", "callback"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "callback"
+              ]
             },
             "description": "Google redirects here after authentication. Handled by Passport — do not call manually unless testing with a valid OAuth code."
           },
@@ -299,13 +389,20 @@
         {
           "name": "Get Featured Properties",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/property/featured",
-              "host": ["{{baseUrl}}"],
-              "path": ["property", "featured"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "property",
+                "featured"
+              ]
             },
             "description": "Returns up to 8 admin-selected properties ordered by relevance (`featuredOrder`)."
           },
@@ -314,13 +411,19 @@
         {
           "name": "Get All Properties",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/property?purpose=sale&type=apartment&minPrice=100000&maxPrice=5000000&location=الإسكندرية,المعمورة",
-              "host": ["{{baseUrl}}"],
-              "path": ["property"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "property"
+              ],
               "query": [
                 {
                   "key": "purpose",
@@ -370,13 +473,20 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/property/{{propertyId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["property", "{{propertyId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "property",
+                "{{propertyId}}"
+              ]
             },
             "description": "Fetches a single property by MongoDB ObjectId."
           },
@@ -385,13 +495,21 @@
         {
           "name": "Get Recommended Properties",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/property/{{propertyId}}/recommended",
-              "host": ["{{baseUrl}}"],
-              "path": ["property", "{{propertyId}}", "recommended"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "property",
+                "{{propertyId}}",
+                "recommended"
+              ]
             },
             "description": "Returns up to 4 similar properties based on scoring (purpose, type, location, price, etc.)."
           },
@@ -493,10 +611,162 @@
             },
             "url": {
               "raw": "{{baseUrl}}/property/create",
-              "host": ["{{baseUrl}}"],
-              "path": ["property", "create"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "property",
+                "create"
+              ]
             },
             "description": "Creates a property. Requires **seller** or **admin** role.\n\nUses `multipart/form-data`. `location`, `amenities`, and `details` are JSON strings."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Property",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "شقة فاخرة في المعمورة",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "شقة واسعة بإطلالة بحرية مع تشطيب سوبر لوكس وموقف سيارات.",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "2500000",
+                  "type": "text"
+                },
+                {
+                  "key": "area",
+                  "value": "150",
+                  "type": "text"
+                },
+                {
+                  "key": "purpose",
+                  "value": "sale",
+                  "type": "text",
+                  "description": "sale | rent"
+                },
+                {
+                  "key": "type",
+                  "value": "apartment",
+                  "type": "text",
+                  "description": "apartment | villa | house | land | office | store"
+                },
+                {
+                  "key": "paymentMethod",
+                  "value": "cash",
+                  "type": "text"
+                },
+                {
+                  "key": "advertiserType",
+                  "value": "owner",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "available",
+                  "type": "text"
+                },
+                {
+                  "key": "bedrooms",
+                  "value": "3",
+                  "type": "text"
+                },
+                {
+                  "key": "bathrooms",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "listedBy",
+                  "value": "",
+                  "type": "text",
+                  "description": "User ObjectId (seller/admin)"
+                },
+                {
+                  "key": "location",
+                  "value": "{\"street\":\"شارع الكورنيش\",\"city\":\"المعمورة\",\"governorate\":\"الإسكندرية\",\"coordinates\":{\"lat\":31.1234,\"lng\":29.9876}}",
+                  "type": "text"
+                },
+                {
+                  "key": "amenities",
+                  "value": "[\"مصعد\",\"جراج\",\"أمن 24 ساعة\"]",
+                  "type": "text"
+                },
+                {
+                  "key": "details",
+                  "value": "{\"view\":\"تطل على البحر\",\"listingCode\":\"RWQ-001\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload up to 15 images"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/property/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "property",
+                "{{propertyId}}"
+              ]
+            },
+            "description": "Updates a property. Requires seller owner or admin role. All form fields are optional; uploaded images are appended."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Property",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/property/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "property",
+                "{{propertyId}}"
+              ]
+            },
+            "description": "Deletes a property. Requires seller owner or admin role."
           },
           "response": []
         }
@@ -513,8 +783,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "stats"
+              ]
             },
             "description": "Returns user count, property counts, and monthly analytics."
           },
@@ -527,8 +802,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/users?page=1&limit=10&search=",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "users"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -556,8 +836,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/properties?page=1&limit=10&search=",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "properties"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -591,12 +876,23 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"available\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/admin/properties/{{propertyId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "properties", "{{propertyId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties",
+                "{{propertyId}}",
+                "status"
+              ]
             },
             "description": "Updates a property's status. Requires admin role.\n\nAllowed values: `available` | `pending` | `rejected`\n\nA property must have `status: \"available\"` before it can be added to featured properties via `PUT /admin/featured-properties`."
           },
@@ -631,14 +927,306 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"propertyIds\": [\n    \"{{propertyId}}\"\n  ]\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/admin/featured-properties",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "featured-properties"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "featured-properties"
+              ]
             },
             "description": "Sets up to 8 featured properties ordered by display priority (1 = most prominent).\n\nIMPORTANT: Only properties with `status: \"available\"` can be featured. Use `PATCH /admin/properties/:id/status` to approve a property before featuring it.\n\nReplaces any previous featured selection entirely."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "Deletes a user and that user's properties. Requires admin role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "item": [
+        {
+          "name": "Add to Favorites",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/favorites/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "favorites",
+                "{{propertyId}}"
+              ]
+            },
+            "description": "Adds a property to the authenticated user favorites."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove from Favorites",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/favorites/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "favorites",
+                "{{propertyId}}"
+              ]
+            },
+            "description": "Removes a property from the authenticated user favorites."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Favorites",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/favorites",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "favorites"
+              ]
+            },
+            "description": "Returns all favorited properties for the authenticated user."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/profile/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profile",
+                "me"
+              ]
+            },
+            "description": "Returns the authenticated user profile."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"phoneNumber\": \"01012345678\",\n  \"address\": \"Cairo, Egypt\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profile/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profile",
+                "me"
+              ]
+            },
+            "description": "Updates name, phoneNumber, and address for the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile Picture",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "profilePicture",
+                  "type": "file",
+                  "src": [],
+                  "description": "Profile image file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profile/me/picture",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profile",
+                "me",
+                "picture"
+              ]
+            },
+            "description": "Updates the authenticated user profile picture."
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\",\n  \"confirmPassword\": \"newpassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profile/me/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profile",
+                "me",
+                "password"
+              ]
+            },
+            "description": "Changes password for non-Google authenticated users."
           },
           "response": []
         }

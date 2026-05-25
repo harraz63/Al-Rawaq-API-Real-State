@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllPropertiesAdmin, getAllUsers, getDashboardStats, setFeaturedProperties, updatePropertyStatus } from "../controllers/adminController";
+import { deleteUser, getAllPropertiesAdmin, getAllUsers, getDashboardStats, setFeaturedProperties, updatePropertyStatus } from "../controllers/adminController";
 import { authenticateJWT, authorizeRoles } from "../middleware/auth-middleware";
 import { validateRequest } from "../middleware/validate-request";
 import { featuredPropertiesSchema, updatePropertyStatusSchema } from "../utils/validate-schema";
@@ -15,6 +15,11 @@ router.get("/users",
     authenticateJWT,
     authorizeRoles("admin"),
     getAllUsers);
+
+router.delete("/users/:id",
+    authenticateJWT,
+    authorizeRoles("admin"),
+    deleteUser);
 
 router.get(
     "/properties",

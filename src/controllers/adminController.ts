@@ -209,3 +209,22 @@ export const setFeaturedProperties = asyncHandler(async (req: Request, res: Resp
         { count: properties.length },
     );
 });
+
+export const deleteUser = asyncHandler(async (req: any, res: Response) => {
+    const { id } = req.params;
+    const currentUserId = req.user?._id ?? req.user?.userId;
+
+    const user = await User.findById(id);
+    if (!user) {
+        throw new AppError("User not found", 404);
+    }
+
+    if (currentUserId?.toString() === id) {
+        throw new AppError("Cannot delete your own account", 400);
+    }
+
+    await User.findByIdAndDelete(id);
+    await Property.deleteMany({ listedBy: id });
+
+    return successResponse(res, 200, "User deleted successfully", null);
+});
